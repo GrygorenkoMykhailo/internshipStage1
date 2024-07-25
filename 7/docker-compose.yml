@@ -1,0 +1,49 @@
+version: '3.1'
+
+services:
+  app:
+    build: .
+    restart: always
+    deploy:
+      replicas: 3
+    expose:
+      - "3000"
+    depends_on:
+      - db
+    ports:
+      - "3000" 
+    environment:
+      DB_HOST: db
+      DB_NAME: test
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_PORT: 3306
+    networks:
+      - mynetwork
+
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+      MYSQL_DATABASE: test
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    networks:
+      - mynetwork
+    volumes:
+      - dbdata:/var/lib/mysql
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  dbdata:
+    external: true
+
+
