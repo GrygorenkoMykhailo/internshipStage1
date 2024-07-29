@@ -1,125 +1,60 @@
-import express, { Request, Response } from "express";
-import { Model } from "objection";
-import Knex from "knex";
+import express, { Request, Response, NextFunction } from "express";
 import bodyParser from "body-parser";
-
-const knex = Knex({
-    client: 'mysql',
-    connection: {
-        host: 'localhost',
-        port: 3306,
-        user: 'root',
-        password: 'Root123',
-        database: 'mydatabase',
-    },
-});
-
-class User extends Model {
-    static get tableName() {
-        return 'Users';
-    }
-
-    static get idColumn() {
-        return 'Id';
-    }
-
-    static get jsonSchema() {
-        return {
-            type: 'object',
-            required: ['Username', 'Email', 'Password'],
-
-            properties: {
-                Id: { type: 'integer' },
-                Username: { type: 'string', minLength: 1, maxLength: 255 },
-                Email: { type: 'string', format: 'email', minLength: 1, maxLength: 255, uniqueItems: true },
-                Password: { type: 'string', minLength: 1, maxLength: 255 }
-            }
-        }
-    }
-}
-
-Model.knex(knex);
+import { UserRepository } from "./Repositories/UserRepository";
+import { UserDao } from "./Types/UserDAO";
+import { UserSchema } from "./UserSchema";
+import { errorHandler } from "./Middleware/errorHandler";
 
 const app = express();
 app.use(bodyParser.json());
 
-type UserDao = {
-    Username: string;
-    Email: string;
-    Password: string;
-};
+const userRepository = new UserRepository();
 
 app.get('/users', async (req: Request, res: Response) => {
-    try {
-        const users = await User.query();
-        res.json(users);
-    } catch {
-        res.status(500).send();
-    }
+    const users = await userRepository.getAllUsers();
+    res.json(users);
 });
 
 app.get('/user/:id', async (req: Request, res: Response) => {
     const id = +req.params.id;
+    if (!id) return res.status(400).send('Invalid ID');
 
-    try {
-        const user = await User.query().findById(id);
-        if (user) {
-            res.json(user);
-        } else {
-            res.status(404).send();
-        }
-    } catch {
-        res.status(500).send();
+    const user = await userRepository.getUserById(id);
+    if (user) {
+        res.json(user);
+    } else {
+        res.status(404).send('User not found');
     }
 });
 
 app.post('/user', async (req: Request, res: Response) => {
-    const userData: UserDao = req.body;
-
-    if (!userData.Username || !userData.Email || !userData.Password) {
-        return res.status(400).send();
-    }
-
-    try {
-        const newUser = await User.query().insert(userData);
-        res.status(201).json(newUser);
-    } catch {
-        res.status(500).send();
-    }
+    const userData: UserDao = await UserSchema.validate(req.body);
+    const newUser = await userRepository.createUser(userData);
+    res.status(201).json(newUser);
 });
 
 app.put('/user/:id', async (req: Request, res: Response) => {
     const id = +req.params.id;
-    const userData: Partial<UserDao> = req.body; 
+    if (!id) return res.status(400).send('Invalid ID');
 
-    try {
-        const user = await User.query().findById(id);
-        if (user) {
-            const updatedUser = await User.query().patchAndFetchById(id, userData);
-            res.json(updatedUser);
-        } else {
-            res.status(404).send();
-        }
-    } catch {
-        res.status(400).send();
+    const userData: Partial<UserDao> = req.body;
+    const updatedUser = await userRepository.updateUser(id, userData);
+    if (updatedUser) {
+        res.json(updatedUser);
+    } else {
+        res.status(404).send('User not found');
     }
-});
+}); 
 
 app.delete('/user/:id', async (req: Request, res: Response) => {
     const id = +req.params.id;
+    if (!id) return res.status(400).send('Invalid ID');
 
-    try {
-        const user = await User.query().findById(id);
-        if (user) {
-            await User.query().deleteById(id);
-            res.status(204).send(); 
-        } else {
-            res.status(404).send();
-        }
-    } catch {
-        res.status(500).send();
-    }
-});
+    await userRepository.deleteUser(id);
+    res.status(204).send();
+}); 
+
+app.use(errorHandler);
 
 app.listen(3000, () => {
     console.log('Server started at port 3000');
