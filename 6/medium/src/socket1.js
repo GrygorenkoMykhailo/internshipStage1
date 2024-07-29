@@ -7,7 +7,7 @@ const stream = fs.createReadStream(path.join(__dirname, 'sourceData', 'largeFile
 
 socket.on('connect', () => {
   stream.on('data', (chunk) => {
-    socket.emit('file', chunk.toString('utf-8'));
+    socket.emit('file', chunk);
   });
 
   stream.on('end', () => {

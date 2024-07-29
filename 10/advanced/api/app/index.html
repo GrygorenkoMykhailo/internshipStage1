@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Client</title>
+    <style>
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 300px;
+            height: 300px;
+            overflow-y: scroll;
+        }
+        #messages div {
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Chat Client</h1>
+
+    <div>
+        <h2>Connect to Chat</h2>
+        <input type="text" id="chatIdInput" placeholder="Enter chat ID">
+        <button id="connectBtn">Connect</button>
+    </div>
+
+    <div id="chatSection" style="display:none;">
+        <h2>Chat Messages</h2>
+        <div id="messages"></div>
+
+        <div>
+            <input type="text" id="authorNameInput" placeholder="Enter your name">
+        </div>
+
+        <div>
+            <textarea id="messageInput" placeholder="Type your message..."></textarea>
+            <button id="sendMessageBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3000'); // URL вашего сервера
+
+        const chatIdInput = document.getElementById('chatIdInput');
+        const connectBtn = document.getElementById('connectBtn');
+        const chatSection = document.getElementById('chatSection');
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const authorNameInput = document.getElementById('authorNameInput');
+
+        let currentChatId = null;
+        let authorName = '';
+
+        // Подключение к чату по клику
+        connectBtn.addEventListener('click', async () => {
+            const chatId = chatIdInput.value.trim();
+            if (chatId) {
+                currentChatId = chatId;
+                chatSection.style.display = 'block';
+
+                // Подключение к чату через сокеты
+                socket.emit('join', chatId);
+
+                // Очистка старых сообщений
+                messagesDiv.innerHTML = '';
+
+                // Загрузка сообщений из чата
+                try {
+                    const response = await fetch('http://localhost:3000/chat/' + chatId);
+                    const data = await response.json();
+
+                    console.log(data);
+
+                    data.messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.textContent = `${message.author}: ${message.content}`;
+                        messagesDiv.appendChild(messageElement);
+                    });
+                } catch (error) {
+                    console.error('Error fetching chat messages:', error);
+                }
+            }
+        });
+
+        // Отправка сообщения по клику
+        sendMessageBtn.addEventListener('click', () => {
+            const messageContent = messageInput.value.trim();
+            authorName = authorNameInput.value.trim() || 'Anonymous'; // Использует введенное имя или "Anonymous"
+            if (messageContent && currentChatId) {
+                const message = {
+                    author: authorName,
+                    content: messageContent,
+                    chat_id: currentChatId
+                };
+                socket.emit('message', message);
+                messageInput.value = '';
+
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${message.author}: ${message.content}`;
+                messagesDiv.appendChild(messageElement);
+            }
+        });
+
+        // Обработка входящих сообщений
+        socket.on('message', (message) => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${message.author}: ${message.content}`;
+            messagesDiv.appendChild(messageElement);
+        });
+
+        socket.on('send_message_error', () => {
+            alert('Failed to send message. Please try again.');
+        });
+    </script>
+</body>
+</html>

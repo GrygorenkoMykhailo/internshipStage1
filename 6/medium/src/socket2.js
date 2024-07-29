@@ -19,19 +19,19 @@ io.on('connection', (socket) => {
   console.log('Client connected');
 
   socket.on('file', (chunk) => {
-    receivedChunks.push(Buffer.from(chunk, 'utf-8'));
+    receivedChunks.push(chunk);  
   });
 
   socket.on('fileEnd', () => {
-      const fileBuffer = Buffer.concat(receivedChunks);
-      fs.writeFile(outputFilePath, fileBuffer, (err) => {
-        if (err) {
-          console.error('Error writing file:', err);
-        } else {
-          console.log('File transfer complete');
-        }
-      });
-      receivedChunks = [];
+    const fileBuffer = Buffer.concat(receivedChunks);
+    fs.writeFile(outputFilePath, fileBuffer, (err) => {
+      if (err) {
+        console.error('Error writing file:', err);
+      } else {
+        console.log('File transfer complete');
+      }
+    });
+    receivedChunks = [];
   });
 
   socket.on('disconnect', () => {

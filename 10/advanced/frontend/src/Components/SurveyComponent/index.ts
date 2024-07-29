@@ -1,0 +1,1 @@
+export { SurveyComponent } from './SurveyComponent'

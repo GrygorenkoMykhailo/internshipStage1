@@ -1,0 +1,1 @@
+export { NoteCardComponent } from './NoteCardComponent'
