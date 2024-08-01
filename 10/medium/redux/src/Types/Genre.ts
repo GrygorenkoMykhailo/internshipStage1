@@ -1,0 +1,1 @@
+export type Genre = "Sci-fi" | "Action" | "Adventure" | "Romantic" | "Comedy"

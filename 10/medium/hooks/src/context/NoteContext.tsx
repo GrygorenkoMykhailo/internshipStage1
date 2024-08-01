@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NoteContextType, Note } from '../Types';
+import { NoteContextType, Note } from '../types';
 
 export const NoteContext = React.createContext<NoteContextType | null>(null);
 

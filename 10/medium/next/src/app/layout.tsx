@@ -1,4 +1,4 @@
-import NoteProvider from "@/context/NoteContext"
+import WeatherProvider from "@/context/WeatherContext"
 
 export const metadata = {
   title: 'Next.js',
@@ -11,10 +11,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <NoteProvider>
+    <WeatherProvider>
       <html lang="en">
         <body>{children}</body>
       </html>
-    </NoteProvider>
+    </WeatherProvider>
   )
 }

@@ -1,29 +1,51 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { ChatDAO, Message } from '../../types';
-import { ActivityTrackerComponent, MessageListComponent, SendMessageComponent, SurveyComponent } from '../../Components';
+import { ActivityTrackerComponent, MessageListComponent, SendMessageComponent, SurveyComponent } from '../../components';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
 const socket = io(import.meta.env.VITE_BASE_URL);
 
+type ConnectToChatForm = {
+    id: string;
+    action: string;
+}
+
 export const IndexPage: React.FC = () => {
+    const { register, handleSubmit, reset, setValue, formState: { errors }, setError } = useForm<ConnectToChatForm>({
+        criteriaMode: 'all'
+    });
     const [chatId, setChatId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
-    const chatIdRef = useRef<HTMLInputElement>(null);
     const [showSurvey, setShowSurvey] = useState(false);
 
-    const connectToChat = async () => {
-        const id = chatIdRef.current?.value.trim();
+    const onSubmit: SubmitHandler<ConnectToChatForm> = async (data) => {
+        if (data.action === 'connect') {
+            if(data.id){
+                connectToChat(data.id);
+            }else{
+                setError('id', { message: 'Chat id is required' });
+            }   
+        } else if (data.action === 'create') {
+            handleCreateChat();
+        }
+    };
+
+    const connectToChat = async (id: string) => {
         if (id && +id) {
             setChatId(+id);
             try {
                 const response = await axios.get(import.meta.env.VITE_BASE_URL + '/chat/' + id);
-                const data: ChatDAO = response.data;  
+                const data: ChatDAO = response.data;
                 setMessages(data.messages);
                 socket.emit('join', id);
             } catch (error) {
                 console.error(error);
+                alert('Failed to connect to chat. Please check the chat ID.');
             }
+        } else {
+            alert('Invalid chat ID. Please enter a valid chat ID.');
         }
     };
 
@@ -34,21 +56,26 @@ export const IndexPage: React.FC = () => {
                 const data: ChatDAO = response.data;
                 setChatId(data.id);
                 alert("New chat id: " + data.id);
-                if (chatIdRef.current) chatIdRef.current.value = '';
+                reset();  
                 setMessages([]);
-                socket.emit('join', data.id);  
+                socket.emit('join', data.id);
             }
         } catch (error) {
             console.error(error);
+            alert('Failed to create a new chat. Please try again.');
         }
     };
 
     const handleSendMessage = useCallback((message: Partial<Message>) => {
         if (chatId) {
             const newMessage = { ...message, chat_id: chatId };
-            socket.emit('message', newMessage);
+            if (newMessage.content && newMessage.content.trim()) {
+                socket.emit('message', newMessage);
+            } else {
+                alert('Message content cannot be empty.');
+            }
         }
-    }, [chatId]); 
+    }, [chatId]);
 
     useEffect(() => {
         socket.on('message', (message: Message) => {
@@ -70,22 +97,39 @@ export const IndexPage: React.FC = () => {
 
     return (
         <div className="p-4">
-            <ActivityTrackerComponent/>
+            <ActivityTrackerComponent />
             <h1 className="text-2xl font-bold mb-4">Chat Client</h1>
             <div className="mb-4">
                 <h2 className="text-xl mb-2">Connect to Chat</h2>
-                <input
-                    ref={chatIdRef}
-                    type="text"
-                    placeholder="Enter chat ID"
-                    className="border p-2 w-full mb-2"
-                />
-                <button onClick={connectToChat} className="bg-green-500 text-white p-2 w-full">
-                    Connect
-                </button>
-                <button onClick={handleCreateChat} className="bg-green-500 text-white p-2 w-full mt-3">
-                    Create New Chat
-                </button>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <input
+                        {...register('id', { 
+                            pattern: {
+                                value: /^\d+$/,
+                                message: 'Chat ID must be a number'
+                            }
+                        })}
+                        type="text"
+                        placeholder="Enter chat ID"
+                        className="border p-2 w-full mb-2"
+                    />
+                    {errors.id && <p className='text-red-500'>{errors.id.message}</p>}
+                    <input {...register('action')} type="hidden" />
+                    <button
+                        type="submit"
+                        onClick={() => setValue('action', 'connect')}
+                        className="bg-green-500 text-white p-2 w-full"
+                    >
+                        Connect
+                    </button>
+                    <button
+                        type="submit"
+                        onClick={() => setValue('action', 'create')}
+                        className="bg-green-500 text-white p-2 w-full mt-3"
+                    >
+                        Create New Chat
+                    </button>
+                </form>
             </div>
             {chatId !== null && (
                 <div>

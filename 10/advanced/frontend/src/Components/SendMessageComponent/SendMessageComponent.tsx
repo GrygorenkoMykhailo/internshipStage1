@@ -1,42 +1,37 @@
-import  React, { useRef } from "react";
+import  React from "react";
 import { Message } from "../../types";
+import { useForm, SubmitHandler } from "react-hook-form";
 
-type props = {
+type SendMessageComponentProps = {
     onSendCallback: (message: Partial<Message>) => void;
 };
 
-export const SendMessageComponent: React.FC<props> = React.memo(({ onSendCallback }) => {
-    const authorRef = useRef<HTMLInputElement>(null);
-    const contentRef = useRef<HTMLTextAreaElement>(null);
+type SendMessageForm = {
+    author: string,
+    content: string,
+}
 
-    const handleSendMessage = () => {
-        const author = authorRef.current?.value || 'Anonymous';
-        const content = contentRef.current?.value || '';
-        if (content) {
-            onSendCallback({ author, content });
-            if (contentRef.current) contentRef.current.value = '';
-        }
-    };
+export const SendMessageComponent: React.FC<SendMessageComponentProps> = React.memo(({ onSendCallback }) => {
+    const { register, handleSubmit } = useForm<SendMessageForm>()
+
+    const onSubmit: SubmitHandler<SendMessageForm> = data => {
+        onSendCallback(data as Partial<Message>);
+    }
 
     return (
-        <div className="mt-4">
+        <form className="mt-4" onSubmit={handleSubmit(onSubmit)}>
             <input
-                ref={authorRef}
+                {...register('author')}
                 type="text"
                 placeholder="Enter your name"
                 className="border p-2 w-full mb-2"
             />
             <textarea
-                ref={contentRef}
+                {...register('content')}
                 placeholder="Type your message..."
                 className="border p-2 w-full mb-2"
             />
-            <button
-                onClick={handleSendMessage}
-                className="bg-blue-500 text-white p-2 w-full"
-            >
-                Send
-            </button>
-        </div>
+            <button type="submit" className="bg-blue-500 text-white p-2 w-full">Send</button>
+        </form>
     );
 });

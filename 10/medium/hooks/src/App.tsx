@@ -1,5 +1,5 @@
 import NoteProvider from "./context/NoteContext"
-import { IndexPage } from "./Pages/Index"
+import { IndexPage } from "./pages/Index"
 
 function App() {
   return(

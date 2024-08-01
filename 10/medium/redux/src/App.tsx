@@ -1,5 +1,5 @@
 import { Provider } from "react-redux"
-import { IndexPage } from "./Pages/Index"
+import { IndexPage } from "./pages/Index"
 import { store } from "./redux/store"
 
 function App() {

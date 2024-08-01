@@ -1,5 +1,5 @@
 import { Message } from "../../types";
-import { MessageComponent } from "../../Components";
+import { MessageComponent } from "../../components";
 
 export const MessageListComponent: React.FC<{ messages: Message[]}> = ({messages}) => {
     return (

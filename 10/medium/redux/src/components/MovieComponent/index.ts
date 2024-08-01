@@ -1,0 +1,1 @@
+export { MovieComponent } from './MovieComponent'

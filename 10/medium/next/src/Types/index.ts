@@ -1,3 +1,3 @@
-export type { Note } from './Note'
-export type { NoteContextType } from './NoteContextType'
-export type { NoteDAO } from './NoteDAO'
+export type { PeriodWeatherForecast } from './PeriodWeatherForecast'
+export type { DailyWeatherForecast } from './DailyWeatherForecast'
+export type { WeatherContextType } from './WeatherContextType'

@@ -1,15 +1,20 @@
-import { Note } from '../../Types';
-import { NoteCardComponent } from '../NoteCardComponent';
+import React from 'react';
+import { Note } from '../../types';
+import { NoteCardComponent } from '..';
 
-export const NoteListComponent = (props: { notes: Note[] | undefined }) => {
+type NoteListComponentPoprs = {
+    notes: Note[] | undefined
+}
 
-    if(!props.notes){
+export const NoteListComponent: React.FC<NoteListComponentPoprs> = ({ notes }) => {
+
+    if(!notes){
         return <div>Notes are not available</div>
     }
 
     return (
         <div>
-            {props.notes.map(note => (
+            {notes.map(note => (
                 <NoteCardComponent key={note.id} note={note} />
             ))}
         </div>
