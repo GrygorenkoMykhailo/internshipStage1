@@ -1,6 +1,14 @@
-const Knex = require('knex');
-const knexConfig = require('../knexfile');
+const createServer = require('./server');
+const readEnvironment = require('./readEnvironment');
+const createLogger = require('./createLogger');
 
-module.exports.knex = Knex(knexConfig.development);
+const boot = () => {
+    readEnvironment();
+    createLogger();
+    const server = createServer();
+    server.listen(3000, () => {
+        console.log('Server started on port 3000');
+    });
+}
 
-module.exports.readEnvironment = () => { require('dotenv').config(); };
+boot();

@@ -1,16 +1,12 @@
+import express, { Request, Response } from "express"
+import bodyParser from "body-parser";
+import usersRoutes from './routes/usersRoutes';
 import { errorHandler } from "./middleware/errorHandler";
-import { createServer } from "./createServer";
-import { boot } from "./main";
-import usersRoutes from './routes/usersRoutes'
 
-boot();
-const server = createServer();
-
-server.use(usersRoutes);
-server.use(errorHandler);
-
-server.listen(3000, () => {
-    console.log('Server started at port 3000');
-});
-
-
+export default () => {
+    const app = express();
+    app.use(bodyParser.json());
+    app.use(usersRoutes);
+    app.use(errorHandler);
+    return app;
+}

@@ -1,4 +1,4 @@
-const { knex } = require('../main');
+const knex = require('../dbConnection');
 const logger = global.logger;
 
 class UserRepository {

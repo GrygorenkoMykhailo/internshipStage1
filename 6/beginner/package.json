@@ -1,10 +1,10 @@
 {
   "name": "beginner",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/main.js",
   "scripts": {
     "fs": "node src/index.js",
-    "server": "node src/server.js"
+    "dev": "node src/main.js"
   },
   "keywords": [],
   "author": "",
