@@ -47,12 +47,7 @@ export const FormComponent = () => {
                 <FormTextInputComponent formName="repeatPassword" displayFormName="Confirm Password" passwordField register={register} error={errors.repeatPassword} />
                 <div className="mb-4">
                     <label htmlFor="dob" className="block text-gray-700">Date of Birth</label>
-                    <input 
-                        type="date" 
-                        id="dob" 
-                        {...register('dob')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded"
-                    />
+                    <input type="date" id="dob" {...register('dob')} className="w-full px-3 py-2 border border-gray-300 rounded"/>
                     {errors.dob && <p className="text-red-500 text-sm mt-1">{errors.dob.message}</p>}
                 </div>
                 <FormSelectComponent formName="country" displayFormName="Country" register={register} error={errors.country} options={countryOptions} onChangeCallback={handleChangeCountry} />

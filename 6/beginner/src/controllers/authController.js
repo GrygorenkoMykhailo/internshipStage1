@@ -1,9 +1,7 @@
-require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-const jwtKey = process.env.JWT_KEY;
-
-module.exports = function generateTokenMiddleware(req, res, next) {
+const generateToken = (req, res, next) => {
+    const jwtKey = process.env.JWT_KEY;
     const { username, email } = req.body;
 
     if (!username || !email) {
@@ -17,4 +15,8 @@ module.exports = function generateTokenMiddleware(req, res, next) {
 
     const token = jwt.sign(payload, jwtKey, { expiresIn: '24h' });
     res.json({ token });
+}
+
+module.exports = {
+    generateToken
 }

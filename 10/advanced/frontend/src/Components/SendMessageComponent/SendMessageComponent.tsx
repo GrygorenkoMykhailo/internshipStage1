@@ -1,4 +1,4 @@
-import  React from "react";
+import React from "react";
 import { Message } from "../../types";
 import { useForm, SubmitHandler } from "react-hook-form";
 
@@ -12,7 +12,7 @@ type SendMessageForm = {
 }
 
 export const SendMessageComponent: React.FC<SendMessageComponentProps> = React.memo(({ onSendCallback }) => {
-    const { register, handleSubmit } = useForm<SendMessageForm>()
+    const { register, handleSubmit } = useForm<SendMessageForm>();
 
     const onSubmit: SubmitHandler<SendMessageForm> = data => {
         onSendCallback(data as Partial<Message>);

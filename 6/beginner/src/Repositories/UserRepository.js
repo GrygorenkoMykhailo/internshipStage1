@@ -1,65 +1,42 @@
-const Knex = require('knex');
-const knexConfig = require('../../knexfile');
+const { knex } = require('../main');
+const logger = global.logger;
 
-module.exports = class UserRepository {
-  constructor(logger) {
-    this.knex = Knex(knexConfig.development);
-    this.logger = logger;
-  }
-
+class UserRepository {
   async getAllUsers() {
-    try {
-      return await this.knex('Users').select('*');
-    } catch (err) {
-      this.logger.error('Failed to fetch users:', err.message);
-      throw err;
-    }
+    return await knex('Users').select('*');
   }
 
   async createUser({ username, email }) {
-    try {
-      const [id] = await this.knex('Users').insert({
-        Username: username,
-        Email: email,
-      });
-      this.logger.info(`User created with ID: ${id}`);
-      return id;
-    } catch (err) {
-      this.logger.error('Failed to create user:', err.message);
-      throw err;
-    }
+    const [id] = await knex('Users').insert({
+      Username: username,
+      Email: email,
+    });
+    logger.info(`User created with ID: ${id}`);
+    return id;
   }
 
   async updateUser(id, { username, email }) {
-    try {
-      const updatedRows = await this.knex('Users').where('Id', '=', id).update({
-        Username: username,
-        Email: email,
-      });
-      if (updatedRows === 0) {
-        this.logger.warn(`No user found with ID ${id}`);
-        return null;
-      }
-      this.logger.info(`User updated with ID: ${id}`);
-      return updatedRows;
-    } catch (err) {
-      this.logger.error(`Failed to update user with ID ${id}:`, err.message);
-      throw err;
+    const updatedRows = await knex('Users').where('Id', '=', id).update({
+      Username: username,
+      Email: email,
+    });
+    if (updatedRows === 0) {
+      logger.warn(`No user found with ID ${id}`);
+      return null;
     }
+    logger.info(`User updated with ID: ${id}`);
+    return updatedRows;
   }
 
   async deleteUser(id) {
-    try {
-      const deletedRows = await this.knex('Users').where('Id', '=', id).delete();
-      if (deletedRows === 0) {
-        this.logger.warn(`No user found with ID ${id}`);
-        return null;
-      }
-      this.logger.info(`User deleted with ID: ${id}`);
-      return deletedRows;
-    } catch (err) {
-      this.logger.error(`Failed to delete user with ID ${id}:`, err.message);
-      throw err;
+    const deletedRows = await knex('Users').where('Id', '=', id).delete();
+    if (deletedRows === 0) {
+      logger.warn(`No user found with ID ${id}`);
+      return null;
     }
+    logger.info(`User deleted with ID: ${id}`);
+    return deletedRows;
   }
 }
+
+module.exports = new UserRepository();

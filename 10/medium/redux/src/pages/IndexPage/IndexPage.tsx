@@ -52,7 +52,7 @@ export const IndexPage = () => {
 
     return (
         <div className="p-6"> 
-            <div className="p-6">
+            <div className="p-6 w-96">
                 <h1 className="text-2xl font-bold mb-4">Movie List</h1>
                 <SelectComponent value={sortOption} onChange={handleSortChange} options={[
                         { value: 'name', label: 'Name' },
@@ -74,11 +74,10 @@ export const IndexPage = () => {
                     ]} label="Filter by Genre" multiple />
             </div>
             {error && <p className="text-red-500">Error: {error}</p>}
-            {filteredAndSortedMovies.length === 0 ? (
-                <p className="text-gray-500">No movies available</p>
-            ) : (
-                <MovieListComponent movies={filteredAndSortedMovies} />
-            )}
+            {filteredAndSortedMovies.length === 0 ? 
+                <p className="text-gray-500">No movies available</p> 
+                : 
+                <MovieListComponent movies={filteredAndSortedMovies} />}
         </div>
     );
 };

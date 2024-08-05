@@ -1,68 +1,107 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react';
+import axios, { AxiosError } from 'axios';
 import { io } from 'socket.io-client';
 import { ChatDAO, Message } from '../../types';
-import { ActivityTrackerComponent, MessageListComponent, SendMessageComponent, SurveyComponent } from '../../components';
+import { MessageListComponent, SendMessageComponent, SurveyComponent } from '../../components';
 import { useForm, SubmitHandler } from 'react-hook-form';
+
+const CreateChatModal: React.FC<{ onClose: () => void; onCreate: (name: string) => void; }> = ({ onClose, onCreate }) => {
+    const [name, setName] = useState('');
+
+    const handleCreate = () => {
+        if (name.trim()) {
+            onCreate(name);
+        } else {
+            alert('Chat name cannot be empty.');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded shadow-lg">
+                <h2 className="text-xl font-semibold mb-4">Create New Chat</h2>
+                <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter chat name"
+                    className="border p-2 w-full mb-4"
+                />
+                <div className="flex justify-end">
+                    <button
+                        onClick={handleCreate}
+                        className="bg-green-500 text-white px-4 py-2 rounded mr-2"
+                    >
+                        Create
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="bg-gray-500 text-white px-4 py-2 rounded"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const socket = io(import.meta.env.VITE_BASE_URL);
 
 type ConnectToChatForm = {
-    id: string;
+    name: string;
     action: string;
-}
+};
 
 export const IndexPage: React.FC = () => {
-    const { register, handleSubmit, reset, setValue, formState: { errors }, setError } = useForm<ConnectToChatForm>({
+    const { register, handleSubmit, reset, setValue } = useForm<ConnectToChatForm>({
         criteriaMode: 'all'
     });
+
     const [chatId, setChatId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [showSurvey, setShowSurvey] = useState(false);
+    const [showCreateChatModal, setShowCreateChatModal] = useState(false);
 
     const onSubmit: SubmitHandler<ConnectToChatForm> = async (data) => {
         if (data.action === 'connect') {
-            if(data.id){
-                connectToChat(data.id);
-            }else{
-                setError('id', { message: 'Chat id is required' });
-            }   
+            await connectToChat(data.name);
         } else if (data.action === 'create') {
-            handleCreateChat();
+            setShowCreateChatModal(true);
         }
     };
 
-    const connectToChat = async (id: string) => {
-        if (id && +id) {
-            setChatId(+id);
-            try {
-                const response = await axios.get(import.meta.env.VITE_BASE_URL + '/chat/' + id);
-                const data: ChatDAO = response.data;
-                setMessages(data.messages);
-                socket.emit('join', id);
-            } catch (error) {
-                console.error(error);
-                alert('Failed to connect to chat. Please check the chat ID.');
-            }
-        } else {
-            alert('Invalid chat ID. Please enter a valid chat ID.');
-        }
-    };
-
-    const handleCreateChat = async () => {
+    const connectToChat = async (name: string) => {
         try {
-            const response = await axios.post(import.meta.env.VITE_BASE_URL + '/chat');
-            if (response.status === 200) {
-                const data: ChatDAO = response.data;
-                setChatId(data.id);
-                alert("New chat id: " + data.id);
-                reset();  
-                setMessages([]);
-                socket.emit('join', data.id);
-            }
+            const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/chat/${name}`);
+            const data: ChatDAO = response.data;
+            setChatId(data.id);
+            setMessages(data.messages);
+            socket.emit('join', data.id);
         } catch (error) {
             console.error(error);
-            alert('Failed to create a new chat. Please try again.');
+            alert('Failed to connect to chat. Please check the chat identifier.');
+        }
+    };
+
+    const handleCreateChat = async (name: string) => {
+        try {
+            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/chat`, { name });
+            if (response.status === 201) {
+                const data: ChatDAO = response.data;
+                setChatId(data.id);
+                alert(`New chat created with ID: ${data.name}`);
+                reset();
+                setMessages([]);
+                socket.emit('join', data.id);
+                setShowCreateChatModal(false);
+            }
+        } catch (error) {
+            if(error instanceof AxiosError){
+                if(error.response?.status === 409){
+                    alert('Chat with name ' + name + ' already exists');
+                }
+            }
         }
     };
 
@@ -89,56 +128,78 @@ export const IndexPage: React.FC = () => {
         const timer = setTimeout(() => setShowSurvey(true), 1000 * 60);
 
         return () => {
+            if (chatId !== null) {
+                socket.emit('leave', chatId.toString());
+            }
             socket.off('message');
             socket.off('send_message_error');
             clearTimeout(timer);
         };
-    }, []);
+    }, [chatId]);
+
+    useEffect(() => {
+        const handleDisconnect = () => {
+            if (chatId !== null) {
+                socket.emit('leave', chatId.toString());
+            }
+        };
+
+        window.addEventListener('beforeunload', handleDisconnect);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleDisconnect);
+            if (chatId !== null) {
+                socket.emit('leave', chatId.toString());
+            }
+        };
+    }, [chatId]);
 
     return (
         <div className="p-4">
-            <ActivityTrackerComponent />
-            <h1 className="text-2xl font-bold mb-4">Chat Client</h1>
-            <div className="mb-4">
-                <h2 className="text-xl mb-2">Connect to Chat</h2>
-                <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-6">
+                <h2 className="text-xl mb-4 font-bold">Connect to Chat</h2>
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
                     <input
-                        {...register('id', { 
-                            pattern: {
-                                value: /^\d+$/,
-                                message: 'Chat ID must be a number'
-                            }
-                        })}
+                        {...register('name')}
                         type="text"
-                        placeholder="Enter chat ID"
-                        className="border p-2 w-full mb-2"
+                        placeholder="Enter chat name"
+                        className="border p-3 w-full rounded"
                     />
-                    {errors.id && <p className='text-red-500'>{errors.id.message}</p>}
                     <input {...register('action')} type="hidden" />
-                    <button
-                        type="submit"
-                        onClick={() => setValue('action', 'connect')}
-                        className="bg-green-500 text-white p-2 w-full"
-                    >
-                        Connect
-                    </button>
-                    <button
-                        type="submit"
-                        onClick={() => setValue('action', 'create')}
-                        className="bg-green-500 text-white p-2 w-full mt-3"
-                    >
-                        Create New Chat
-                    </button>
+                    <div className="flex gap-4">
+                        <button
+                            type="submit"
+                            onClick={() => setValue('action', 'connect')}
+                            className="bg-blue-500 text-white p-3 rounded flex-grow"
+                        >
+                            Connect
+                        </button>
+                        <button
+                            type="submit"
+                            onClick={() => setValue('action', 'create')}
+                            className="bg-green-500 text-white p-3 rounded flex-grow"
+                        >
+                            Create New Chat
+                        </button>
+                    </div>
                 </form>
             </div>
             {chatId !== null && (
-                <div>
-                    <h2 className="text-xl mb-2">Chat Messages</h2>
-                    <MessageListComponent messages={messages} />
+                <div className="flex flex-col">
+                    <h2 className="text-xl mb-4">Chat Messages</h2>
+                    <div className="flex-1 overflow-hidden">
+                        <MessageListComponent messages={messages} />
+                    </div>
                     <SendMessageComponent onSendCallback={handleSendMessage} />
                 </div>
             )}
             {showSurvey && <SurveyComponent onSubmitCallback={() => setShowSurvey(false)} />}
+            {showCreateChatModal && (
+                <CreateChatModal
+                    onClose={() => setShowCreateChatModal(false)}
+                    onCreate={handleCreateChat}
+                />
+            )}
         </div>
     );
 };

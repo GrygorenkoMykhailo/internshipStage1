@@ -15,12 +15,8 @@ export const FormSelectComponent: React.FC<FormSelectComponentProps> = ({ formNa
     return (
         <div className="mb-4">
             <label htmlFor={formName} className="block text-gray-700">{displayFormName}</label>
-            <select 
-                id={formName} 
-                {...register(formName as keyof Form)}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
-                onChange={(e) => onChangeCallback && onChangeCallback(e.target.value)}
-            >
+            <select id={formName} {...register(formName as keyof Form)} className="w-full px-3 py-2 border border-gray-300 rounded"
+                onChange={(e) => onChangeCallback && onChangeCallback(e.target.value)}>
                 <option value="">Select an option</option>
                 {options.map((option, index) => (
                     <option key={index} value={option.value}>{option.label}</option>

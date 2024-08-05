@@ -10,7 +10,7 @@ export const SelectComponent: React.FC<SelectComponentProps> = ({ value, onChang
     return (
         <div className="mb-4">
             <label className="mr-2">{label}:</label>
-            <select multiple={multiple} value={value} onChange={onChange} className="border p-2">
+            <select multiple={multiple} value={value} onChange={onChange} className="border p-2 w-full">
                 {options.map(option => (
                     <option key={option.value} value={option.value}>
                         {option.label}

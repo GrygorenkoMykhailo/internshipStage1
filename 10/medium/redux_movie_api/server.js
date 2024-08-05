@@ -92,8 +92,11 @@ const movies = [
 ]
 
 app.get('/movies', (req, res) => {
-    console.log('request');
-    res.json(movies);
+    res.status(200).json(movies);
+});
+
+app.get('/movie/:id', (req, res) => {
+    res.status(200).json(movies.find(f => f.id === +req.params.id));
 });
 
 app.listen(3000, () => {

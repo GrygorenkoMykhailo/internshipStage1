@@ -22,9 +22,20 @@ const moviesSlice = createSlice({
         fetchMoviesFailed: (state, action: PayloadAction<string>) => {
             state.error = action.payload;
         },
+        fetchMovieByIdSucceeded: (state, action: PayloadAction<Movie>) => {
+            state.movies = [...state.movies, action.payload];
+        },
+        fetchMovieByIdFailed: (state, action: PayloadAction<string>) => {
+            state.error = action.payload;
+        },
     },
 });
 
-export const { fetchMoviesSucceeded, fetchMoviesFailed } = moviesSlice.actions;
+export const { 
+    fetchMoviesSucceeded, 
+    fetchMoviesFailed, 
+    fetchMovieByIdSucceeded, 
+    fetchMovieByIdFailed 
+} = moviesSlice.actions;
 
 export default moviesSlice.reducer;

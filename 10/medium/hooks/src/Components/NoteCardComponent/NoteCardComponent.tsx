@@ -15,12 +15,7 @@ export const NoteCardComponent: React.FC<NoteCardComponentProps> = ({ note }) =>
                 <h2 className="text-2xl font-bold mb-2">{note.title}</h2>
                 <p className="text-gray-700 text-base mb-4">{note.content}</p>
                 <p className="text-gray-500 text-sm">{`Created at: ${note.createdAt.toLocaleDateString()}`}</p>
-                <button 
-                    onClick={() => deleteNote(note.id)} 
-                    className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
-                >
-                    Delete
-                </button>
+                <button onClick={() => deleteNote(note.id)} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700">Delete</button>
             </div>
         </div>
     );
